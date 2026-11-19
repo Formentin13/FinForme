@@ -1,5 +1,11 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.2.0
+- Formulário de lançamento simplificado conforme a aba:
+  - Dinheiro: sem "Forma", sem "Situação" e sem "Tipo de conta"; botões "Pago (saída)" e "Recebido (entrada)".
+  - PIX e Cartão: sem o campo "Forma" (já é conhecido pela aba). Cartão usa "Compra" e "Estorno".
+  - Bancos: "Forma" limita-se a Banco ou PIX.
+  - Situação (A pagar/A receber) e Tipo de conta (Fixa/Variável) só em Bancos e PIX.
 v1.1.0
 - Planejamento: categorias podem ser criadas, editadas e excluídas (despesa ou receita).
   Excluir uma categoria deixa os lançamentos dela como "Sem categoria".
@@ -12,3 +18,5 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
+

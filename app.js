@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};
@@ -151,7 +151,7 @@ const Stat = ({ label, value, color }) => html`<div style=${{ flex: 1, minWidth:
   <div style=${{ fontSize: 21, fontWeight: 700, color: color || C.text, marginTop: 4 }}>${value}</div></div>`;
 
 /* ------------------------------ Lançamento (com anotações) ------------------------------ */
-function TxModal({ data, state, onSave, onDelete, onClose }) {
+function TxModal({ data, state, methods, onSave, onDelete, onClose }) {
   const isNew = !data.id;
   const [f, setF] = useState({
     sign: data.value > 0 ? "in" : "out", value: data.value ? String(Math.abs(data.value)).replace(".", ",") : "",
@@ -162,32 +162,36 @@ function TxModal({ data, state, onSave, onDelete, onClose }) {
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const needsBank = f.method === "banco" || f.method === "pix";
   const isCard = f.method === "cartao";
+  const isCash = f.method === "dinheiro";
+  const simple = isCard || isCash; // sem "A pagar/A receber" nem repetição
+  const allowed = methods && methods.length ? methods : Object.keys(METHODS);
+  const showForma = allowed.length > 1;
   const val = P.parseAmount(f.value || "0");
   const ok = !isNaN(val) && val !== 0 && f.desc.trim() && f.date;
   const inn = f.sign === "in";
   const seg = (items, cur, on, color) => html`<div style=${{ display: "flex", gap: 8, marginBottom: 12 }}>${items.map(([k, label]) => html`<button key=${k} onClick=${() => on(k)} style=${{ flex: 1, minHeight: 44, borderRadius: 12, border: `1.5px solid ${cur === k ? "transparent" : C.borda}`, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit", background: cur === k ? (color ? color(k) : C.peach) : "transparent", color: cur === k ? "#fff" : C.text }}>${label}</button>`)}</div>`;
   const save = () => {
-    const recurring = !isCard && f.kind !== "avulsa";
+    const recurring = !simple && f.kind !== "avulsa";
     const o = { ...data, id: data.id, date: f.date, desc: f.desc.trim(), value: inn ? Math.abs(val) : -Math.abs(val), method: f.method, bankId: needsBank ? f.bankId : "", category: f.category, nf: f.nf.trim(), note: f.note.trim(), checked: f.checked, source: data.source || "manual",
-      status: isCard ? "feito" : f.status, kind: recurring ? f.kind : "", recId: recurring ? (data.recId || uid()) : "", dueDay: +f.date.slice(8, 10), est: false };
+      status: simple ? "feito" : f.status, kind: recurring ? f.kind : "", recId: recurring ? (data.recId || uid()) : "", dueDay: +f.date.slice(8, 10), est: false };
     if (!recurring && data.recId) o._endRec = data.recId;
     onSave(o);
   };
   return html`<${Modal} title=${isNew ? "Novo lançamento" : "Lançamento"} onClose=${onClose}>
-    ${seg([["out", "Saída (pagar)"], ["in", "Entrada (receber)"]], f.sign, (k) => set("sign", k), (k) => (k === "in" ? C.teal : C.peach))}
-    ${!isCard && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Situação</div>
+    ${seg(isCash ? [["out", "Pago (saída)"], ["in", "Recebido (entrada)"]] : isCard ? [["out", "Compra (saída)"], ["in", "Estorno (entrada)"]] : [["out", "Saída (pagar)"], ["in", "Entrada (receber)"]], f.sign, (k) => set("sign", k), (k) => (k === "in" ? C.teal : C.peach))}
+    ${!simple && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Situação</div>
       ${seg([["feito", inn ? "Recebido" : "Pago"], ["previsto", inn ? "A receber" : "A pagar"]], f.status, (k) => set("status", k))}`}
     ${data.est && html`<div style=${{ background: "#EAF1FD", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, marginBottom: 12 }}>Valor estimado (copiado do mês anterior). Informe o valor real.</div>`}
     <${Field} label="Descrição"><input style=${inputStyle} value=${f.desc} onInput=${(e) => set("desc", e.target.value)} /><//>
     <div style=${{ display: "flex", gap: 10 }}>
       <div style=${{ flex: 1 }}><${Field} label="Valor (R$)"><input style=${inputStyle} inputMode="decimal" value=${f.value} onInput=${(e) => set("value", e.target.value)} placeholder="0,00" /><//></div>
-      <div style=${{ flex: 1 }}><${Field} label=${f.status === "previsto" && !isCard ? "Vencimento" : "Data"}><input type="date" style=${inputStyle} value=${f.date} onInput=${(e) => set("date", e.target.value)} /><//></div>
+      <div style=${{ flex: 1 }}><${Field} label=${f.status === "previsto" && !simple ? "Vencimento" : "Data"}><input type="date" style=${inputStyle} value=${f.date} onInput=${(e) => set("date", e.target.value)} /><//></div>
     </div>
     <div style=${{ display: "flex", gap: 10 }}>
-      <div style=${{ flex: 1 }}><${Field} label="Forma"><select style=${inputStyle} value=${f.method} onChange=${(e) => set("method", e.target.value)}>${Object.entries(METHODS).map(([k, v]) => html`<option key=${k} value=${k}>${v}</option>`)}</select><//></div>
+      ${showForma && html`<div style=${{ flex: 1 }}><${Field} label="Forma"><select style=${inputStyle} value=${f.method} onChange=${(e) => set("method", e.target.value)}>${allowed.map((k) => html`<option key=${k} value=${k}>${METHODS[k]}</option>`)}</select><//></div>`}
       ${needsBank && html`<div style=${{ flex: 1 }}><${Field} label="Conta"><select style=${inputStyle} value=${f.bankId} onChange=${(e) => set("bankId", e.target.value)}><option value="">— escolher —</option>${state.banks.map((b) => html`<option key=${b.id} value=${b.id}>${b.name}</option>`)}</select><//></div>`}
     </div>
-    ${!isCard && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Tipo de conta</div>
+    ${!simple && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Tipo de conta</div>
       ${seg([["avulsa", "Única"], ["fixa", "Fixa"], ["variavel", "Variável"]], f.kind, (k) => set("kind", k))}
       ${f.kind !== "avulsa" && html`<div style=${{ fontSize: 12.5, color: C.textSec, marginTop: -4, marginBottom: 12 }}>${f.kind === "fixa" ? "Repete todo mês com o mesmo valor (ex.: aluguel, internet)." : "Repete todo mês, mas o valor muda (ex.: energia). Vem como estimado; você informa o real ao pagar."}</div>`}`}
     <${Field} label="Categoria"><select style=${inputStyle} value=${f.category} onChange=${(e) => set("category", e.target.value)}><option value="">Sem categoria</option>${CATS.map((c) => html`<option key=${c.key} value=${c.key}>${c.label}</option>`)}</select><//>
@@ -196,7 +200,7 @@ function TxModal({ data, state, onSave, onDelete, onClose }) {
       <${Field} label="Nota fiscal / documento"><input style=${inputStyle} value=${f.nf} onInput=${(e) => set("nf", e.target.value)} placeholder="Ex.: NF 1234 - Fornecedor X" /><//>
       <${Field} label="Observação"><textarea style=${{ ...inputStyle, minHeight: 80, resize: "vertical" }} value=${f.note} onInput=${(e) => set("note", e.target.value)} placeholder="Ex.: pagamento parcial da NF 1234, referente a ..." /><//>
     </div>
-    ${(isCard || f.status === "feito") && html`<label style=${{ display: "flex", gap: 10, alignItems: "center", fontSize: 14.5, marginBottom: 16, cursor: "pointer" }}><input type="checkbox" checked=${f.checked} onChange=${(e) => set("checked", e.target.checked)} style=${{ width: 20, height: 20 }} /> Conferido</label>`}
+    ${(simple || f.status === "feito") && html`<label style=${{ display: "flex", gap: 10, alignItems: "center", fontSize: 14.5, marginBottom: 16, cursor: "pointer" }}><input type="checkbox" checked=${f.checked} onChange=${(e) => set("checked", e.target.checked)} style=${{ width: 20, height: 20 }} /> Conferido</label>`}
     ${data.source && data.source !== "manual" && data.source !== "recorrente" && html`<div style=${{ fontSize: 12.5, color: C.textSec, marginBottom: 12 }}>Importado de extrato (${data.source.toUpperCase()}).</div>`}
     <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
       <${Btn} full disabled=${!ok} onClick=${save}>Salvar<//>
@@ -664,7 +668,7 @@ function App() {
       ${tab === "plan" && html`<${Planejamento} s=${s} setS=${setS} monthKey=${monthKey} />`}
       ${tab === "ajustes" && html`<${Ajustes} s=${s} setS=${setS} monthKey=${monthKey} restore=${restore} clearMonth=${clearMonth} />`}
     </div>
-    ${modal && modal.tx && html`<${TxModal} data=${modal.tx} state=${s} onSave=${saveTx} onDelete=${delTx} onClose=${() => setModal(null)} />`}
+    ${modal && modal.tx && html`<${TxModal} data=${modal.tx} state=${s} methods=${{ dinheiro: ["dinheiro"], pix: ["pix"], cartao: ["cartao"], banco: ["banco", "pix"] }[tab]} onSave=${saveTx} onDelete=${delTx} onClose=${() => setModal(null)} />`}
     ${modal && modal.imp && html`<${ImportModal} state=${s} monthKey=${monthKey} defaultMethod=${modal.imp} onClose=${() => setModal(null)}
       onImport=${(list, settles) => { setS((p) => ({ ...p, tx: [...p.tx.map((t) => { const st = (settles || []).find((x) => x.id === t.id); return st ? { ...t, ...st.patch } : t; }), ...list] })); const d = [...list, ...(settles || []).map((x) => x.patch)].map((x) => x.date).sort()[0]; if (d) setMonthKey(d.slice(0, 7)); setModal(null); }} />`}
     ${confirmBox && html`<${Modal} title="Confirmar" onClose=${() => setConfirmBox(null)}><p style=${{ marginTop: 0 }}>${confirmBox.text}</p><div style=${{ display: "flex", gap: 10 }}><${Btn} full onClick=${confirmBox.yes} style=${{ background: C.alerta, color: "#fff" }}>Apagar<//><${Btn} ghost onClick=${() => setConfirmBox(null)}>Cancelar<//></div><//>`}
