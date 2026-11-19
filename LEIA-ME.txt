@@ -1,0 +1,25 @@
+﻿FINFORME v1.1.0 - Suas finanças. Simples assim.
+
+COMO COLOCAR NO AR (grátis):
+1) Descompacte este .zip.
+2) Acesse https://app.netlify.com/drop e arraste a PASTA "finforme".
+3) Abra o link no celular/iPad > Compartilhar > Adicionar à Tela de Início.
+   (Os arquivos já estão incluídos: funciona offline depois da primeira abertura.)
+
+COMO USAR:
+- Ajustes > Contas bancárias: cadastre os bancos do cliente e o saldo inicial.
+- Bancos / PIX / Cartão > Importar extrato: escolha um arquivo OFX (recomendado) ou PDF,
+  confira a lista e confirme. Lançamentos já importados são detectados e ignorados.
+- Toque em qualquer lançamento para anotar a Nota Fiscal e observações.
+- Marque "Conferido" nos lançamentos revisados.
+- Em qualquer aba, ao criar um lançamento escolha a Situação: Pago/Recebido (já aconteceu) ou
+  A pagar/A receber (agendado, com vencimento). Tipo de conta: Única, Fixa (repete todo mês
+  com o mesmo valor) ou Variável (repete todo mês com valor estimado).
+- A Visão Geral mostra os vencimentos (vencidos e próximos 7 dias) com o botão Pagar/Receber.
+- Ao importar um extrato, lançamentos agendados com valor e data parecidos recebem baixa automática.
+- Ajustes > Backup: baixe o backup com frequência. Os dados ficam só neste aparelho/navegador.
+
+OBSERVAÇÃO SOBRE PDF: a leitura é aproximada (depende do layout do banco). Sempre confira
+datas, valores e sinal (entrada/saída) na tela de revisão. PDF escaneado (imagem) não é lido.
+
+

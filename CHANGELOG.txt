@@ -1,0 +1,14 @@
+﻿FINFORME - HISTÓRICO DE VERSÕES
+
+v1.1.0
+- Planejamento: categorias podem ser criadas, editadas e excluídas (despesa ou receita).
+  Excluir uma categoria deixa os lançamentos dela como "Sem categoria".
+- Versão exibida em Ajustes.
+
+v1.0.0
+- Renomeado para FinForme, nova logo e ícones, cor de destaque azul.
+- Categorias voltadas para empresa.
+- Contas Fixas/Variáveis, situação Pago/Recebido ou A pagar/A receber, alertas de vencimento
+  e baixa automática ao importar extrato.
+- Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
+- Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.

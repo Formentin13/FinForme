@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>FinForme</title>
+<meta name="description" content="FinForme - Suas finanças. Simples assim." />
+<meta name="color-scheme" content="light" />
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#0A2A6B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="FinForme" />
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+<link rel="icon" href="./icons/favicon-32.png" sizes="32x32" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" />
+<style>
+  html, body { margin: 0; background: #F4F8FA; }
+  body { font-family: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif; overscroll-behavior-y: none; padding-top: env(safe-area-inset-top, 0px); }
+  button, input, select, textarea { font-family: inherit; }
+  #boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #4F6F77; }
+</style>
+</head>
+<body>
+<div id="root"><div id="boot">Carregando…</div></div>
+<script src="./lib/react.js"></script>
+<script src="./lib/react-dom.js"></script>
+<script src="./lib/htm.js"></script>
+<script src="./lib/pdf.js"></script>
+<script src="./parsers.js"></script>
+<script src="./icons.js"></script>
+<script src="./app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));
+</script>
+</body>
+</html>
