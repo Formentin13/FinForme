@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};
@@ -175,14 +175,12 @@ function TxModal({ data, state, methods, onSave, onDelete, onClose }) {
   const save = () => {
     const recurring = !simple && f.kind !== "avulsa";
     const o = { ...data, id: data.id, date: f.date, desc: f.desc.trim(), value: inn ? Math.abs(val) : -Math.abs(val), method: f.method, bankId: needsBank ? f.bankId : "", category: f.category, nf: f.nf.trim(), note: f.note.trim(), checked: f.checked, source: data.source || "manual",
-      status: simple ? "feito" : f.status, kind: recurring ? f.kind : "", recId: recurring ? (data.recId || uid()) : "", dueDay: +f.date.slice(8, 10), est: false };
+      status: data.status === "previsto" && !simple ? "previsto" : "feito", kind: recurring ? f.kind : "", recId: recurring ? (data.recId || uid()) : "", dueDay: +f.date.slice(8, 10), est: false };
     if (!recurring && data.recId) o._endRec = data.recId;
     onSave(o);
   };
   return html`<${Modal} title=${isNew ? "Novo lançamento" : "Lançamento"} onClose=${onClose}>
-    ${seg(isCash ? [["out", "Pago (saída)"], ["in", "Recebido (entrada)"]] : isCard ? [["out", "Compra (saída)"], ["in", "Estorno (entrada)"]] : [["out", "Saída (pagar)"], ["in", "Entrada (receber)"]], f.sign, (k) => set("sign", k), (k) => (k === "in" ? C.teal : C.peach))}
-    ${!simple && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Situação</div>
-      ${seg([["feito", inn ? "Recebido" : "Pago"], ["previsto", inn ? "A receber" : "A pagar"]], f.status, (k) => set("status", k))}`}
+    ${seg([["out", "Pago (saída)"], ["in", "Recebido (entrada)"]], f.sign, (k) => set("sign", k), (k) => (k === "in" ? C.teal : C.peach))}
     ${data.est && html`<div style=${{ background: "#EAF1FD", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, marginBottom: 12 }}>Valor estimado (copiado do mês anterior). Informe o valor real.</div>`}
     <${Field} label="Descrição"><input style=${inputStyle} value=${f.desc} onInput=${(e) => set("desc", e.target.value)} /><//>
     <div style=${{ display: "flex", gap: 10 }}>
@@ -195,7 +193,7 @@ function TxModal({ data, state, methods, onSave, onDelete, onClose }) {
     </div>
     ${!simple && html`<div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 5 }}>Tipo de conta</div>
       ${seg([["avulsa", "Única"], ["fixa", "Fixa"], ["variavel", "Variável"]], f.kind, (k) => set("kind", k))}
-      ${f.kind !== "avulsa" && html`<div style=${{ fontSize: 12.5, color: C.textSec, marginTop: -4, marginBottom: 12 }}>${f.kind === "fixa" ? "Repete todo mês com o mesmo valor (ex.: aluguel, internet)." : "Repete todo mês, mas o valor muda (ex.: energia). Vem como estimado; você informa o real ao pagar."}</div>`}`}
+      ${f.kind !== "avulsa" && html`<div style=${{ fontSize: 12.5, color: C.textSec, marginTop: -4, marginBottom: 12 }}>${f.kind === "fixa" ? "Repete todo mês com o mesmo valor (ex.: aluguel, internet). No mês seguinte ela aparece em Vencimentos como \"A pagar\"." : "Repete todo mês, mas o valor muda (ex.: energia). No mês seguinte vem como estimada; você informa o valor real ao pagar."}</div>`}`}
     <${Field} label="Categoria"><select style=${inputStyle} value=${f.category} onChange=${(e) => set("category", e.target.value)}><option value="">Sem categoria</option>${CATS.map((c) => html`<option key=${c.key} value=${c.key}>${c.label}</option>`)}</select><//>
     <div style=${{ background: "#EAF1FD", border: `1px solid #CFE0FB`, borderRadius: 14, padding: "12px 12px 2px", marginBottom: 12 }}>
       <div style=${{ fontWeight: 700, fontSize: 13.5, marginBottom: 8, display: "flex", gap: 6, alignItems: "center" }}><${I.StickyNote} size=${16} /> Anotações deste lançamento</div>
@@ -623,7 +621,7 @@ function App() {
       <div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
         <div style=${{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="./icons/logo-icon.png" alt="FinForme" width="48" height="48" style=${{ borderRadius: 12, display: "block" }} />
-          <div><h1 style=${{ fontSize: 26, margin: 0, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}><span style=${{ color: "#0A2A6B" }}>Fin</span><span style=${{ color: "#E0A41E" }}>Forme</span></h1>
+          <div><h1 style=${{ fontSize: 26, margin: 0, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}><span style=${{ color: "#0A2A6B" }}>Fin</span><span style=${{ color: "#E0A41E" }}>Forme</span><span style=${{ fontSize: 11.5, fontWeight: 600, color: C.textSec, marginLeft: 8, letterSpacing: 0, verticalAlign: "middle", background: C.soft, borderRadius: 999, padding: "2px 8px" }}>v${VERSION}</span></h1>
           <div style=${{ fontSize: 13.5, color: C.textSec }}>${s.client.name || "Suas finanças. Simples assim."}</div></div></div>
         <div style=${{ display: "flex", alignItems: "center", gap: 4, background: C.card, border: `1px solid ${C.borda}`, borderRadius: 14, padding: 3 }}>
           <${IconBtn} onClick=${() => setMonthKey(shiftMonth(monthKey, -1))}><${I.ChevronLeft} /><//>

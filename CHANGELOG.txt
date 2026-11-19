@@ -1,5 +1,12 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.4.0
+- Removido o seletor "Situação" (Pago / A pagar) do formulário de lançamento em todas as abas.
+- Os botões de tipo agora são iguais em todas as abas: "Pago (saída)" e "Recebido (entrada)".
+- Todo lançamento novo nasce como realizado. Contas Fixas e Variáveis (Bancos e PIX) continuam
+  gerando o mês seguinte como "A pagar", com alerta de vencimento na Visão Geral.
+v1.3.1
+- A versão do programa agora aparece no cabeçalho (ao lado do nome FinForme), em todas as telas.
 v1.3.0
 - "Conferido" agora só existe para lançamentos importados de extrato (OFX/PDF). Lançamentos
   digitados manualmente já são considerados conferidos (sem caixinha, sem pendência).
@@ -24,6 +31,8 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
+
 
 
 

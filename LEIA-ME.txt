@@ -1,4 +1,4 @@
-﻿FINFORME v1.3.0 - Suas finanças. Simples assim.
+﻿FINFORME v1.4.0 - Suas finanças. Simples assim.
 
 COMO COLOCAR NO AR (grátis):
 1) Descompacte este .zip.
@@ -21,6 +21,8 @@ COMO USAR:
 
 OBSERVAÇÃO SOBRE PDF: a leitura é aproximada (depende do layout do banco). Sempre confira
 datas, valores e sinal (entrada/saída) na tela de revisão. PDF escaneado (imagem) não é lido.
+
+
 
 
 
