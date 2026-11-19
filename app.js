@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};
@@ -87,6 +87,8 @@ function applyRules(desc, rules) {
   return r ? r.category : "";
 }
 const isDone = (t) => t.status !== "previsto";
+// só lançamentos vindos de extrato (OFX/PDF) precisam ser conferidos; os manuais já nascem conferidos
+const needsCheck = (t) => (t.source === "ofx" || t.source === "pdf") && isDone(t);
 const dayDiff = (a, b) => Math.round((new Date(a + "T00:00:00") - new Date(b + "T00:00:00")) / 864e5);
 const daysIn = (mk) => new Date(+mk.slice(0, 4), +mk.slice(5), 0).getDate();
 // Gera, mês a mês, as ocorrências previstas das contas fixas / variáveis
@@ -200,7 +202,7 @@ function TxModal({ data, state, methods, onSave, onDelete, onClose }) {
       <${Field} label="Nota fiscal / documento"><input style=${inputStyle} value=${f.nf} onInput=${(e) => set("nf", e.target.value)} placeholder="Ex.: NF 1234 - Fornecedor X" /><//>
       <${Field} label="Observação"><textarea style=${{ ...inputStyle, minHeight: 80, resize: "vertical" }} value=${f.note} onInput=${(e) => set("note", e.target.value)} placeholder="Ex.: pagamento parcial da NF 1234, referente a ..." /><//>
     </div>
-    ${(simple || f.status === "feito") && html`<label style=${{ display: "flex", gap: 10, alignItems: "center", fontSize: 14.5, marginBottom: 16, cursor: "pointer" }}><input type="checkbox" checked=${f.checked} onChange=${(e) => set("checked", e.target.checked)} style=${{ width: 20, height: 20 }} /> Conferido</label>`}
+    ${needsCheck(data) && html`<label style=${{ display: "flex", gap: 10, alignItems: "center", fontSize: 14.5, marginBottom: 16, cursor: "pointer" }}><input type="checkbox" checked=${f.checked} onChange=${(e) => set("checked", e.target.checked)} style=${{ width: 20, height: 20 }} /> Conferido com o extrato / comprovante</label>`}
     ${data.source && data.source !== "manual" && data.source !== "recorrente" && html`<div style=${{ fontSize: 12.5, color: C.textSec, marginBottom: 12 }}>Importado de extrato (${data.source.toUpperCase()}).</div>`}
     <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
       <${Btn} full disabled=${!ok} onClick=${save}>Salvar<//>
@@ -217,18 +219,18 @@ function TxList({ list, state, onEdit, onToggle, onPay, emptyText, bankName }) {
     let l = list;
     if (q.trim()) { const n = norm(q); l = l.filter((t) => norm(t.desc + " " + t.nf + " " + t.note + " " + catLabel(t.category)).includes(n)); }
     if (only === "semnota") l = l.filter((t) => !t.note && !t.nf);
-    if (only === "naoconf") l = l.filter((t) => isDone(t) && !t.checked);
+    if (only === "naoconf") l = l.filter((t) => needsCheck(t) && !t.checked);
     return [...l].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   }, [list, q, only]);
   const chip = (k, label) => html`<button onClick=${() => setOnly(only === k ? "" : k)} style=${{ border: `1.5px solid ${only === k ? C.peach : C.borda}`, background: only === k ? "#EAF1FD" : "transparent", color: C.text, borderRadius: 999, padding: "6px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>${label}</button>`;
   return html`<div>
     <div style=${{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
       <div style=${{ position: "relative", flex: "1 1 200px" }}><input style=${{ ...inputStyle, paddingLeft: 36 }} placeholder="Buscar descrição, NF ou nota…" value=${q} onInput=${(e) => setQ(e.target.value)} /><span style=${{ position: "absolute", left: 11, top: 11, color: C.textSec }}><${I.Search} size=${17} /></span></div>
-      ${chip("semnota", "Sem anotação")} ${chip("naoconf", "Não conferidos")}
+      ${chip("semnota", "Sem anotação")} ${list.some(needsCheck) && chip("naoconf", "Não conferidos")}
     </div>
     ${shown.length === 0 ? html`<${Empty} text=${emptyText || "Nenhum lançamento."} />` : shown.map((t) => html`
       <div key=${t.id} style=${{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 4px", borderBottom: `1px solid ${C.borda}` }}>
-        ${!isDone(t) ? html`<span title="Agendado" style=${{ width: 26, minWidth: 26, marginTop: 2, color: C.peachDark, display: "flex", justifyContent: "center" }}><${I.CalendarClock} size=${22} /></span>` : html`<button title="Conferido" onClick=${() => onToggle(t.id)} style=${{ width: 26, height: 26, minWidth: 26, borderRadius: 8, marginTop: 2, border: `1.8px solid ${t.checked ? C.teal : C.borda}`, background: t.checked ? C.teal : "transparent", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>${t.checked && html`<${I.Check} size=${15} />`}</button>`}
+        ${!isDone(t) ? html`<span title="Agendado" style=${{ width: 26, minWidth: 26, marginTop: 2, color: C.peachDark, display: "flex", justifyContent: "center" }}><${I.CalendarClock} size=${22} /></span>` : !needsCheck(t) ? (list.some(needsCheck) ? html`<span style=${{ width: 26, minWidth: 26 }}></span>` : null) : html`<button title="Conferido" onClick=${() => onToggle(t.id)} style=${{ width: 26, height: 26, minWidth: 26, borderRadius: 8, marginTop: 2, border: `1.8px solid ${t.checked ? C.teal : C.borda}`, background: t.checked ? C.teal : "transparent", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>${t.checked && html`<${I.Check} size=${15} />`}</button>`}
         <div onClick=${() => onEdit(t)} style=${{ flex: 1, minWidth: 0, cursor: "pointer" }}>
           <div style=${{ fontSize: 14.5, fontWeight: 600, overflowWrap: "anywhere" }}>${t.desc}</div>
           <div style=${{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>${!isDone(t) && html`<${Pill} tone=${dueInfo(t).tone}>${t.value >= 0 ? "A receber" : "A pagar"} · ${dueInfo(t).label}<//>`}${t.kind && html`<${Pill}>${t.kind === "fixa" ? "Fixa" : "Variável"}<//>`}</div>
@@ -371,7 +373,7 @@ function Visao({ s, monthKey, T, accounts, pend, goTab, alerts, onPay }) {
       <div style=${{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         ${pend.semCat > 0 && html`<${Pill} tone="gold">${pend.semCat} sem categoria<//>`}
         ${pend.semNota > 0 && html`<${Pill} tone="gold">${pend.semNota} sem anotação<//>`}
-        ${pend.naoConf > 0 && html`<${Pill} tone="gold">${pend.naoConf} não conferidos<//>`}
+        ${pend.naoConf > 0 && html`<${Pill} tone="gold">${pend.naoConf} importados a conferir<//>`}
       </div><div style=${{ marginTop: 12 }}><${Btn} ghost onClick=${() => goTab("banco")}>Revisar lançamentos<//></div><//>`}
     <${Card}><h3 style=${sectionTitle}>Para onde foi o dinheiro</h3>
       ${cats.length === 0 ? html`<${Empty} text="Sem saídas neste mês." />` : cats.map((c) => html`<div key=${c.k} style=${{ marginBottom: 12 }}>
@@ -484,58 +486,28 @@ function CatModal({ data, onSave, onClose }) {
     <${Btn} full disabled=${!name.trim()} onClick=${() => onSave({ ...data, label: name.trim(), kind: locked ? "transf" : kind })}>Salvar<//><//>`;
 }
 
-function Planejamento({ s, setS, monthKey }) {
-  const [goal, setGoal] = useState(null);
+function CategoriasCard({ s, setS }) {
   const [cat, setCat] = useState(null);
   const [delCat, setDelCat] = useState(null);
-  const spent = {};
-  s.tx.forEach((t) => { if (effMonth(t, s.card) === monthKey && t.value < 0 && !isTransfer(t)) spent[t.category || "_"] = (spent[t.category || "_"] || 0) - t.value; });
-  const setBudget = (k, v) => setS((p) => ({ ...p, budgets: { ...p.budgets, [k]: P.parseAmount(v || "0") || 0 } }));
   const saveCat = (c) => {
     setS((p) => ({ ...p, categories: c.key ? p.categories.map((x) => (x.key === c.key ? c : x)) : [...p.categories, { ...c, key: "c_" + uid() }] }));
     setCat(null);
   };
   const removeCat = (c) => {
-    setS((p) => {
-      const budgets = { ...p.budgets }; delete budgets[c.key];
-      return { ...p, categories: p.categories.filter((x) => x.key !== c.key), budgets, rules: p.rules.filter((r) => r.category !== c.key), tx: p.tx.map((t) => (t.category === c.key ? { ...t, category: "" } : t)) };
-    });
+    setS((p) => ({ ...p, categories: p.categories.filter((x) => x.key !== c.key), rules: p.rules.filter((r) => r.category !== c.key), tx: p.tx.map((t) => (t.category === c.key ? { ...t, category: "" } : t)) }));
     setDelCat(null);
   };
   const used = (k) => s.tx.filter((t) => t.category === k).length;
-  const expense = s.categories.filter((c) => c.kind === "despesa");
-  const others = s.categories.filter((c) => c.kind !== "despesa");
-  const actions = (c) => html`<div style=${{ display: "flex" }}><${IconBtn} title="Editar" onClick=${() => setCat(c)}><${I.Pencil} size=${16} /><//>${c.kind !== "transf" && html`<${IconBtn} danger title="Excluir" onClick=${() => setDelCat(c)}><${I.Trash2} size=${16} /><//>`}</div>`;
-  return html`<div>
-    <${Card}><div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}><h3 style=${{ ...sectionTitle, margin: 0 }}>Orçamento por categoria</h3><${Btn} ghost onClick=${() => setCat({})}><${I.Plus} size=${16} /> Categoria<//></div>
-      ${expense.length === 0 && html`<${Empty} text="Nenhuma categoria de despesa. Toque em + Categoria." />`}
-      ${expense.map((c) => { const lim = s.budgets[c.key] || 0, sp = spent[c.key] || 0; return html`<div key=${c.key} style=${{ marginBottom: 14 }}>
-        <div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, marginBottom: 5 }}><span style=${{ fontSize: 14.5, flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>${c.label}</span>
-          <input style=${{ ...inputStyle, width: 104, padding: "6px 9px", textAlign: "right" }} inputMode="decimal" placeholder="Limite" defaultValue=${lim ? String(lim).replace(".", ",") : ""} onBlur=${(e) => setBudget(c.key, e.target.value)} />${actions(c)}</div>
-        <${Bar} value=${sp} max=${lim} color=${lim && sp > lim ? C.alerta : C.peach} />
-        <div style=${{ fontSize: 12.5, color: lim && sp > lim ? C.alerta : C.textSec, marginTop: 3 }}>Gasto ${fmt(sp)}${lim ? " de " + fmt(lim) : ""}</div></div>`; })}
-      ${spent._ > 0 && html`<div style=${{ fontSize: 13.5, color: C.textSec }}>Sem categoria: gasto ${fmt(spent._)}</div>`}<//>
-    <${Card}><h3 style=${sectionTitle}>Outras categorias</h3>
-      ${others.map((c) => html`<div key=${c.key} style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: `1px solid ${C.borda}` }}><div><div style=${{ fontSize: 14.5 }}>${c.label}</div><div style=${{ fontSize: 12, color: C.textSec }}>${c.kind === "transf" ? "Não conta nos totais" : "Receita"}</div></div>${actions(c)}</div>`)}<//>
-    <${Card}><div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style=${{ ...sectionTitle, margin: 0 }}>Metas</h3><${Btn} ghost onClick=${() => setGoal({})}><${I.Plus} size=${16} /> Meta<//></div>
-      ${s.goals.length === 0 ? html`<${Empty} text="Nenhuma meta ainda." />` : s.goals.map((g) => html`<div key=${g.id} style=${{ marginTop: 14 }}>
-        <div style=${{ display: "flex", justifyContent: "space-between" }}><b>${g.name}</b><span style=${{ fontSize: 13.5 }}>${fmt(g.saved)} / ${fmt(g.target)}</span></div>
-        <${Bar} value=${g.saved} max=${g.target} color=${C.teal} />
-        <div style=${{ display: "flex", gap: 8, marginTop: 8 }}><${Btn} ghost style=${{ minHeight: 36, padding: "6px 12px" }} onClick=${() => { const v = prompt("Quanto guardar (R$)?"); const n = P.parseAmount(v || ""); if (n) setS((p) => ({ ...p, goals: p.goals.map((x) => (x.id === g.id ? { ...x, saved: x.saved + n } : x)) })); }}>+ Guardar<//>
-        <${Btn} ghost style=${{ minHeight: 36, padding: "6px 12px" }} onClick=${() => setGoal(g)}>Editar<//></div></div>`)}<//>
-    ${goal && html`<${GoalModal} data=${goal} onClose=${() => setGoal(null)} onSave=${(d) => { setS((p) => ({ ...p, goals: d.id ? p.goals.map((x) => (x.id === d.id ? d : x)) : [...p.goals, { ...d, id: uid(), saved: d.saved || 0 }] })); setGoal(null); }} onDelete=${(id) => { setS((p) => ({ ...p, goals: p.goals.filter((x) => x.id !== id) })); setGoal(null); }} />`}
+  const kindLabel = (k) => (k === "receita" ? "Receita" : k === "transf" ? "Não conta nos totais" : "Despesa");
+  return html`<${Card}><div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}><h3 style=${{ ...sectionTitle, margin: 0 }}>Categorias</h3><${Btn} ghost onClick=${() => setCat({})}><${I.Plus} size=${16} /> Categoria<//></div>
+    ${s.categories.map((c) => html`<div key=${c.key} style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, padding: "4px 0", borderBottom: `1px solid ${C.borda}` }}>
+      <div style=${{ minWidth: 0 }}><div style=${{ fontSize: 14.5, overflowWrap: "anywhere" }}>${c.label}</div><div style=${{ fontSize: 12, color: C.textSec }}>${kindLabel(c.kind)}</div></div>
+      <div style=${{ display: "flex" }}><${IconBtn} title="Editar" onClick=${() => setCat(c)}><${I.Pencil} size=${16} /><//>${c.kind !== "transf" && html`<${IconBtn} danger title="Excluir" onClick=${() => setDelCat(c)}><${I.Trash2} size=${16} /><//>`}</div></div>`)}
     ${cat && html`<${CatModal} data=${cat} onSave=${saveCat} onClose=${() => setCat(null)} />`}
     ${delCat && html`<${Modal} title="Excluir categoria" onClose=${() => setDelCat(null)}>
-      <p style=${{ marginTop: 0 }}>Excluir <b>${delCat.label}</b>? ${used(delCat.key) > 0 ? used(delCat.key) + " lançamento(s) ficarão \"Sem categoria\". " : ""}Orçamento e regras automáticas ligados a ela também serão removidos. Não dá para desfazer.</p>
+      <p style=${{ marginTop: 0 }}>Excluir <b>${delCat.label}</b>? ${used(delCat.key) > 0 ? used(delCat.key) + " lançamento(s) ficarão \"Sem categoria\". " : ""}Regras automáticas ligadas a ela também serão removidas. Não dá para desfazer.</p>
       <div style=${{ display: "flex", gap: 10 }}><${Btn} full onClick=${() => removeCat(delCat)} style=${{ background: C.alerta }}>Excluir<//><${Btn} ghost onClick=${() => setDelCat(null)}>Cancelar<//></div><//>`}
-  </div>`;
-}
-function GoalModal({ data, onSave, onDelete, onClose }) {
-  const [n, setN] = useState(data.name || ""), [t, setT] = useState(data.target ? String(data.target).replace(".", ",") : "");
-  return html`<${Modal} title="Meta" onClose=${onClose}><${Field} label="Nome"><input style=${inputStyle} value=${n} onInput=${(e) => setN(e.target.value)} /><//>
-    <${Field} label="Valor da meta (R$)"><input style=${inputStyle} inputMode="decimal" value=${t} onInput=${(e) => setT(e.target.value)} /><//>
-    <div style=${{ display: "flex", gap: 10 }}><${Btn} full disabled=${!n.trim() || !(P.parseAmount(t || "0") > 0)} onClick=${() => onSave({ ...data, name: n.trim(), target: P.parseAmount(t) })}>Salvar<//>
-    ${data.id && html`<${Btn} ghost onClick=${() => onDelete(data.id)} style=${{ color: C.alerta, borderColor: C.alerta }}><${I.Trash2} size=${17} /><//>`}</div><//>`;
+  <//>`;
 }
 
 function Ajustes({ s, setS, monthKey, restore, clearMonth }) {
@@ -545,7 +517,7 @@ function Ajustes({ s, setS, monthKey, restore, clearMonth }) {
   const [rule, setRule] = useState({ kw: "", category: "fornecedores" });
   const exportCsv = () => {
     const rows = [["Data", "Descrição", "Valor", "Forma", "Conta", "Categoria", "NF/Documento", "Observação", "Conferido", "Situação", "Tipo de conta"]];
-    [...s.tx].sort((a, b) => (a.date < b.date ? -1 : 1)).forEach((t) => rows.push([brDate(t.date), t.desc, String(t.value).replace(".", ","), METHODS[t.method], (s.banks.find((b) => b.id === t.bankId) || {}).name || "", catLabel(t.category), t.nf, t.note, t.checked ? "Sim" : "Não", isDone(t) ? (t.value >= 0 ? "Recebido" : "Pago") : (t.value >= 0 ? "A receber" : "A pagar"), t.kind === "fixa" ? "Fixa" : t.kind === "variavel" ? "Variável" : "Única"]));
+    [...s.tx].sort((a, b) => (a.date < b.date ? -1 : 1)).forEach((t) => rows.push([brDate(t.date), t.desc, String(t.value).replace(".", ","), METHODS[t.method], (s.banks.find((b) => b.id === t.bankId) || {}).name || "", catLabel(t.category), t.nf, t.note, (!needsCheck(t) || t.checked) ? "Sim" : "Não", isDone(t) ? (t.value >= 0 ? "Recebido" : "Pago") : (t.value >= 0 ? "A receber" : "A pagar"), t.kind === "fixa" ? "Fixa" : t.kind === "variavel" ? "Variável" : "Única"]));
     download("lancamentos.csv", "﻿" + rows.map((r) => r.map((c) => `"${String(c || "").replace(/"/g, '""')}"`).join(";")).join("\r\n"), "text/csv;charset=utf-8");
   };
   const applyAll = () => { let n = 0; setS((p) => ({ ...p, tx: p.tx.map((t) => { if (t.category) return t; const c = applyRules(t.desc, p.rules); if (c) { n++; return { ...t, category: c }; } return t; }) })); setMsg("Regras aplicadas aos lançamentos sem categoria."); };
@@ -557,6 +529,7 @@ function Ajustes({ s, setS, monthKey, restore, clearMonth }) {
       <${Field} label="Saldo inicial do caixa (dinheiro)"><input style=${inputStyle} inputMode="decimal" defaultValue=${s.cashInitial ? String(s.cashInitial).replace(".", ",") : ""} onBlur=${(e) => setS((p) => ({ ...p, cashInitial: P.parseAmount(e.target.value || "0") || 0 }))} /><//><//>
     <${Card}><div style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><h3 style=${{ ...sectionTitle, margin: 0 }}>Contas bancárias</h3><${Btn} ghost onClick=${() => setBank({})}><${I.Plus} size=${16} /> Conta<//></div>
       ${s.banks.length === 0 ? html`<${Empty} text="Cadastre os bancos do cliente para vincular os extratos." />` : s.banks.map((b) => html`<div key=${b.id} style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.borda}` }}><div><b>${b.name}</b><div style=${{ fontSize: 12.5, color: C.textSec }}>${b.acctId ? "Conta " + b.acctId + " · " : ""}Saldo inicial ${fmt(b.initial)}</div></div><${IconBtn} onClick=${() => setBank(b)}><${I.Pencil} size=${16} /><//></div>`)}<//>
+    <${CategoriasCard} s=${s} setS=${setS} />
     <${Card}><h3 style=${sectionTitle}>Regras de categoria automática</h3>
       <div style=${{ fontSize: 13.5, color: C.textSec, marginBottom: 10 }}>Se a descrição contiver o texto, a categoria é aplicada na importação.</div>
       ${s.rules.map((r, i) => html`<div key=${i} style=${{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.borda}`, fontSize: 14 }}><span>"${r.kw}" → <b>${catLabel(r.category)}</b></span><${IconBtn} danger onClick=${() => setS((p) => ({ ...p, rules: p.rules.filter((_, j) => j !== i) }))}><${I.Trash2} size=${16} /><//></div>`)}
@@ -619,7 +592,7 @@ function App() {
   ];
   const monthTx = s.tx.filter((t) => isDone(t) && effMonth(t, s.card) === monthKey);
   const alerts = s.tx.filter((t) => !isDone(t) && t.method !== "cartao").map((t) => ({ t, d: dayDiff(t.date, todayStr()) })).filter((x) => x.d <= 7).sort((a, b) => a.d - b.d);
-  const pend = { semNota: monthTx.filter((t) => !t.note && !t.nf).length, semCat: monthTx.filter((t) => !t.category).length, naoConf: monthTx.filter((t) => !t.checked).length };
+  const pend = { semNota: monthTx.filter((t) => !t.note && !t.nf).length, semCat: monthTx.filter((t) => !t.category).length, naoConf: monthTx.filter((t) => needsCheck(t) && !t.checked).length };
   const bankName = (id) => (s.banks.find((b) => b.id === id) || {}).name || "";
 
   const saveTx = (d) => {
@@ -643,7 +616,7 @@ function App() {
   const restore = (json) => { try { const o = JSON.parse(json); if (!Array.isArray(o.tx) || !o.card) throw 0; setS(migrate(o)); return true; } catch { return false; } };
   const clearMonth = () => setConfirmBox({ text: `Apagar TODOS os lançamentos de ${monthLabel(monthKey)}? Não dá para desfazer.`, yes: () => { setS((p) => ({ ...p, tx: p.tx.filter((t) => effMonth(t, p.card) !== monthKey) })); setConfirmBox(null); } });
 
-  const TABS = [["visao", "Visão Geral", I.LayoutDashboard], ["banco", "Bancos", I.Landmark], ["dinheiro", "Dinheiro", I.Banknote], ["pix", "PIX", I.Pix], ["cartao", "Cartão", I.CreditCard], ["plan", "Planejamento", I.Target], ["ajustes", "Ajustes", I.Settings]];
+  const TABS = [["visao", "Visão Geral", I.LayoutDashboard], ["banco", "Bancos", I.Landmark], ["dinheiro", "Dinheiro", I.Banknote], ["pix", "PIX", I.Pix], ["cartao", "Cartão", I.CreditCard], ["ajustes", "Ajustes", I.Settings]];
   const common = { s, monthKey, onEdit: editTx, onToggle: toggle, onPay: pay, onAdd: addTx, bankName };
   return html`<div style=${{ background: C.bg, minHeight: "100vh", color: C.text, padding: "20px 14px 70px", boxSizing: "border-box" }}>
     <div style=${{ maxWidth: 860, margin: "0 auto" }}>
@@ -665,7 +638,6 @@ function App() {
       ${tab === "dinheiro" && html`<${Simples} ...${common} method="dinheiro" title="dinheiro" />`}
       ${tab === "pix" && html`<${Simples} ...${common} method="pix" title="PIX" onImport=${() => openImport("banco")} />`}
       ${tab === "cartao" && html`<${CartaoTab} ...${common} setS=${setS} onImport=${() => openImport("cartao")} />`}
-      ${tab === "plan" && html`<${Planejamento} s=${s} setS=${setS} monthKey=${monthKey} />`}
       ${tab === "ajustes" && html`<${Ajustes} s=${s} setS=${setS} monthKey=${monthKey} restore=${restore} clearMonth=${clearMonth} />`}
     </div>
     ${modal && modal.tx && html`<${TxModal} data=${modal.tx} state=${s} methods=${{ dinheiro: ["dinheiro"], pix: ["pix"], cartao: ["cartao"], banco: ["banco", "pix"] }[tab]} onSave=${saveTx} onDelete=${delTx} onClose=${() => setModal(null)} />`}

@@ -1,4 +1,4 @@
-﻿FINFORME v1.2.0 - Suas finanças. Simples assim.
+﻿FINFORME v1.3.0 - Suas finanças. Simples assim.
 
 COMO COLOCAR NO AR (grátis):
 1) Descompacte este .zip.
@@ -11,7 +11,7 @@ COMO USAR:
 - Bancos / PIX / Cartão > Importar extrato: escolha um arquivo OFX (recomendado) ou PDF,
   confira a lista e confirme. Lançamentos já importados são detectados e ignorados.
 - Toque em qualquer lançamento para anotar a Nota Fiscal e observações.
-- Marque "Conferido" nos lançamentos revisados.
+- Nos lançamentos importados de extrato, marque "Conferido" depois de revisar.
 - Em qualquer aba, ao criar um lançamento escolha a Situação: Pago/Recebido (já aconteceu) ou
   A pagar/A receber (agendado, com vencimento). Tipo de conta: Única, Fixa (repete todo mês
   com o mesmo valor) ou Variável (repete todo mês com valor estimado).
@@ -21,6 +21,7 @@ COMO USAR:
 
 OBSERVAÇÃO SOBRE PDF: a leitura é aproximada (depende do layout do banco). Sempre confira
 datas, valores e sinal (entrada/saída) na tela de revisão. PDF escaneado (imagem) não é lido.
+
 
 
 

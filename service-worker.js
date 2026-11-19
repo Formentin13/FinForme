@@ -1,4 +1,4 @@
-const CACHE = "finforme-v1.2";
+const CACHE = "finforme-v1.3";
 const FILES = ["./", "./index.html", "./app.js", "./parsers.js", "./icons.js", "./manifest.json",
   "./lib/react.js", "./lib/react-dom.js", "./lib/htm.js", "./lib/pdf.js", "./lib/pdf.worker.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/logo-icon.png", "./icons/logo.png"];

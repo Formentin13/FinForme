@@ -1,5 +1,11 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.3.0
+- "Conferido" agora só existe para lançamentos importados de extrato (OFX/PDF). Lançamentos
+  digitados manualmente já são considerados conferidos (sem caixinha, sem pendência).
+- O filtro "Não conferidos" só aparece quando há lançamentos importados na lista.
+- Removida a aba Planejamento (orçamentos por categoria e metas).
+- O cadastro de categorias (criar, editar, excluir) passou para Ajustes > Categorias.
 v1.2.0
 - Formulário de lançamento simplificado conforme a aba:
   - Dinheiro: sem "Forma", sem "Situação" e sem "Tipo de conta"; botões "Pago (saída)" e "Recebido (entrada)".
@@ -18,5 +24,6 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
 
 
