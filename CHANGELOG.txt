@@ -1,5 +1,12 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.5.0
+- Aplicações e resgates automáticos (ex.: "BB Rende Fácil", aplicação, resgate, CDB, RDB, poupança
+  automática) agora entram como "Transferência" na importação e NÃO contam em Recebido/Pago.
+  Antes eram somados como entradas e saídas e inflavam os dois totais.
+- Lançamentos já importados e sem categoria também são corrigidos ao abrir o app.
+- A tela de revisão da importação avisa quantos lançamentos foram marcados como Transferência.
+- O saldo da conta continua considerando esses lançamentos (o dinheiro realmente entrou e saiu da conta).
 v1.4.0
 - Removido o seletor "Situação" (Pago / A pagar) do formulário de lançamento em todas as abas.
 - Os botões de tipo agora são iguais em todas as abas: "Pago (saída)" e "Recebido (entrada)".
@@ -31,6 +38,7 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
 
 
 

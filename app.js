@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};
@@ -63,6 +63,7 @@ function migrate(s) {
   const fix = (k) => (LEGACY_CAT[k] || k);
   o.tx = (o.tx || []).map((t) => (t.category && LEGACY_CAT[t.category] ? { ...t, category: fix(t.category) } : t));
   o.rules = (o.rules || []).map((r) => ({ ...r, category: fix(r.category) }));
+  o.tx = o.tx.map((t) => ((t.source === "ofx" || t.source === "pdf") && !t.category && isInternalMove(t.desc) ? { ...t, category: "transferencia" } : t));
   const base = o.categories && o.categories.length ? o.categories : DEFAULT_CATS;
   o.categories = base.map((c) => ({ ...c, kind: c.kind || (c.key === "transferencia" ? "transf" : c.key === "vendas" ? "receita" : "despesa") }));
   const b = {}; Object.entries(o.budgets || {}).forEach(([k, v]) => { b[fix(k)] = (b[fix(k)] || 0) + v; }); o.budgets = b;
@@ -81,10 +82,15 @@ function installmentOf(p, mk) {
   if (idx < 0 || idx >= p.installments) return null;
   return { value: p.totalValue / p.installments, index: idx + 1, total: p.installments };
 }
+// Aplicações e resgates automáticos (ex.: BB Rende Fácil) são dinheiro que só muda de bolso:
+// não são receita nem despesa, então entram como "Transferência" e ficam fora de Recebido/Pago.
+const INTERNAL_RE = /rende\s*f[aá]cil|invest\s*f[aá]cil|aplica[cç][aã]o|aplic\.?\s*(fin|autom)|resgate|\bcdb\b|\brdb\b|poupan[cç]a\s*autom/i;
+const isInternalMove = (desc) => INTERNAL_RE.test(norm(desc));
 function applyRules(desc, rules) {
   const d = norm(desc);
   const r = (rules || []).find((r) => r.kw && d.includes(norm(r.kw)));
-  return r ? r.category : "";
+  if (r) return r.category;
+  return isInternalMove(desc) ? "transferencia" : "";
 }
 const isDone = (t) => t.status !== "previsto";
 // só lançamentos vindos de extrato (OFX/PDF) precisam ser conferidos; os manuais já nascem conferidos
@@ -320,6 +326,7 @@ function ImportModal({ state, monthKey, onImport, onClose, defaultMethod }) {
     </div>`}
     ${step === "review" && html`<div>
       <div style=${{ fontSize: 13.5, color: C.textSec, marginBottom: 10 }}>${file.name} — ${rows.length} lançamentos encontrados${parsed.lineCount ? "" : ""}.</div>
+      ${rows.some((r) => r.category === "transferencia") && html`<div style=${{ background: "#EAF1FD", borderRadius: 12, padding: "10px 12px", fontSize: 13.5, marginBottom: 10 }}>${rows.filter((r) => r.category === "transferencia").length} lançamento(s) de aplicação/resgate (ex.: Rende Fácil) foram marcados como <b>Transferência</b> e <b>não entram em Recebido/Pago</b>. Você pode mudar a categoria depois.</div>`}
       <div style=${{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <div style=${{ flex: "1 1 200px" }}><${Field} label="Destino"><select style=${inputStyle} value=${asCard ? "cartao" : "banco"} onChange=${(e) => setAsCard(e.target.value === "cartao")}><option value="banco">Conta bancária / PIX</option><option value="cartao">Fatura de cartão</option></select><//></div>
         ${!asCard && html`<div style=${{ flex: "1 1 200px" }}><${Field} label="Conta"><select style=${inputStyle} value=${bankId} onChange=${(e) => setBankId(e.target.value)}><option value="">— sem conta —</option>${state.banks.map((b) => html`<option key=${b.id} value=${b.id}>${b.name}</option>`)}</select><//></div>`}
