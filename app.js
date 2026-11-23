@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.5.0";
+const VERSION = "1.6.0";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};

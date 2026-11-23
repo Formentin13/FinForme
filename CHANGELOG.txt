@@ -1,5 +1,10 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.6.0
+- Todos os ícones do app trocados pelos do Tabler Icons (https://tabler.io/icons, licença MIT), estilo outline.
+  Abas: Visão Geral (layout-dashboard), Bancos (building-bank), Dinheiro (cash), PIX (qrcode),
+  Cartão (credit-card), Ajustes (settings). Os ícones vão dentro do app (funcionam sem internet).
+- Os ícones do aplicativo na tela inicial (logo FinForme) não mudaram.
 v1.5.0
 - Aplicações e resgates automáticos (ex.: "BB Rende Fácil", aplicação, resgate, CDB, RDB, poupança
   automática) agora entram como "Transferência" na importação e NÃO contam em Recebido/Pago.
@@ -38,6 +43,7 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
 
 
 
