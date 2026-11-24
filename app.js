@@ -1,5 +1,5 @@
 /* FinForme — Controle financeiro do cliente */
-const VERSION = "1.6.1";
+const VERSION = "1.6.2";
 const { useState, useEffect, useMemo, useRef } = React;
 const html = htm.bind(React.createElement);
 const I = {};
@@ -515,6 +515,16 @@ function CategoriasCard({ s, setS }) {
   <//>`;
 }
 
+function FileButton({ accept, onFile, children }) {
+  const [name, setName] = useState("");
+  return html`<div style=${{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+    <label style=${{ display: "inline-flex", alignItems: "center", gap: 8, color: C.peachDark, border: `1.5px solid ${C.peach}`, borderRadius: 14, padding: "11px 18px", fontWeight: 600, fontSize: 14.5, cursor: "pointer", minHeight: 44, boxSizing: "border-box" }}>
+      <${I.Upload} size=${17} />${children || "Escolher arquivo"}
+      <input type="file" accept=${accept} style=${{ display: "none" }} onChange=${async (e) => { const f = e.target.files[0]; if (f) { setName(f.name); await onFile(f); } e.target.value = ""; }} />
+    </label>
+    <span style=${{ fontSize: 13.5, color: C.textSec, overflowWrap: "anywhere", minWidth: 0 }}>${name || "Nenhum arquivo escolhido"}</span>
+  </div>`;
+}
 function Ajustes({ s, setS, monthKey, restore, clearMonth }) {
   const [bank, setBank] = useState(null);
   const [txt, setTxt] = useState("");
@@ -546,7 +556,10 @@ function Ajustes({ s, setS, monthKey, restore, clearMonth }) {
       <div style=${{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <${Btn} onClick=${() => download(`finforme-backup-${todayStr()}.json`, JSON.stringify(s), "application/json")}><${I.Download} size=${17} /> Baixar backup<//>
         <${Btn} ghost onClick=${exportCsv}>Exportar CSV (Excel)<//></div>
-      <${Field} label="Restaurar backup (arquivo)"><input type="file" accept=".json,application/json" onChange=${async (e) => { const f = e.target.files[0]; if (f) setMsg(restore(await f.text()) ? "Backup restaurado." : "Arquivo de backup inválido."); }} /><//>
+      <div style=${{ marginBottom: 12 }}>
+        <div style=${{ fontSize: 13, fontWeight: 600, color: C.textSec, marginBottom: 6 }}>Restaurar backup (arquivo)</div>
+        <${FileButton} accept=".json,application/json" onFile=${async (f) => { setMsg(restore(await f.text()) ? "Backup restaurado." : "Arquivo de backup inválido."); }}>Escolher arquivo<//>
+      </div>
       <${Field} label="…ou cole o texto do backup"><textarea style=${{ ...inputStyle, minHeight: 70 }} value=${txt} onInput=${(e) => setTxt(e.target.value)} /><//>
       <${Btn} ghost onClick=${() => setMsg(restore(txt) ? "Backup restaurado." : "Não foi possível ler este backup.")}><${I.Upload} size=${17} /> Restaurar do texto<//>
       ${msg && html`<div style=${{ marginTop: 10, fontSize: 14, color: C.teal }}>${msg}</div>`}<//>

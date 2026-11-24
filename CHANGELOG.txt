@@ -1,5 +1,8 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.6.2
+- Ajustes > Restaurar backup: o botão "Escolher arquivo" do navegador (aspecto antigo) foi trocado por um botão
+  no mesmo estilo dos demais (contorno azul, ícone de upload) com o nome do arquivo escolhido ao lado.
 v1.6.1
 - Segurança: leitura de PDF com isEvalSupported:false e XFA desligado (mitigação oficial da CVE-2024-4367
   do PDF.js 3.x, que permitia a um PDF malicioso executar código). A leitura dos extratos não muda.
@@ -47,6 +50,7 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
 
 
 
