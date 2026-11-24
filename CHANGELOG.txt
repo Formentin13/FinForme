@@ -1,5 +1,9 @@
 ﻿FINFORME - HISTÓRICO DE VERSÕES
 
+v1.6.1
+- Segurança: leitura de PDF com isEvalSupported:false e XFA desligado (mitigação oficial da CVE-2024-4367
+  do PDF.js 3.x, que permitia a um PDF malicioso executar código). A leitura dos extratos não muda.
+- Pendente para versão futura: atualizar o PDF.js para a série 4.x.
 v1.6.0
 - Todos os ícones do app trocados pelos do Tabler Icons (https://tabler.io/icons, licença MIT), estilo outline.
   Abas: Visão Geral (layout-dashboard), Bancos (building-bank), Dinheiro (cash), PIX (qrcode),
@@ -43,6 +47,7 @@ v1.0.0
   e baixa automática ao importar extrato.
 - Abas: Visão Geral, Bancos, Dinheiro, PIX, Cartão, Planejamento, Ajustes.
 - Importação de extratos OFX e PDF, anotações de NF e observação por lançamento.
+
 
 
 

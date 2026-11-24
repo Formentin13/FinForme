@@ -127,7 +127,8 @@
   }
 
   async function parsePDF(buf, pdfjsLib, defaultYear) {
-    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    // isEvalSupported:false = mitigação oficial da CVE-2024-4367 (PDF malicioso executando JavaScript)
+    const doc = await pdfjsLib.getDocument({ data: buf, isEvalSupported: false, enableXfa: false }).promise;
     const lines = [];
     for (let p = 1; p <= doc.numPages; p++) {
       const page = await doc.getPage(p);
